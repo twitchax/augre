@@ -1,6 +1,8 @@
 use anyhow::Result;
+use clap::Parser;
+use serde::{Serialize, Deserialize};
 use tokio::process::Command;
-use std::process::{Stdio, ExitStatus};
+use std::{process::{Stdio, ExitStatus}, str::FromStr};
 use yansi::Paint;
 use dialoguer::Confirm;
 
@@ -13,18 +15,41 @@ static TAB: &str = "  ";
 pub type Res<T> = Result<T, anyhow::Error>;
 pub type Void = Res<()>;
 
+// Mode helpers.
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub enum Mode {
+    LocalCpu,
+    LocalGpu,
+    #[default]
+    OpenAi
+}
+
+impl FromStr for Mode {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "localcpu" => Ok(Mode::LocalCpu),
+            "localgpu" => Ok(Mode::LocalGpu),
+            "openai" => Ok(Mode::OpenAi),
+            _ => Err(anyhow::Error::msg("Invalid mode specified.")),
+        }
+    }
+}
+
 // Traits for various internal functionality.
 
-pub trait Nameable {
+pub trait HasName {
     fn name(&self) -> &'static str;
 }
 
-pub trait Ensurable {
+pub trait IsEnsurable {
     async fn is_present(&self) -> Result<bool>;
     async fn make_present(&self) -> Result<()>;
 }
 
-pub trait Removable {
+pub trait IsRemovable {
     async fn make_not_present(&self) -> Result<()>;
 }
 
@@ -35,7 +60,7 @@ pub trait EnsurableEntity {
 }
 
 impl<T> EnsurableEntity for T
-    where T: Nameable + Ensurable + Send + Sync
+    where T: HasName + IsEnsurable + Send + Sync
 {
     async fn ensure(&self, confirm: bool) -> Result<()> {
         let name = self.name();
@@ -50,11 +75,16 @@ impl<T> EnsurableEntity for T
         
         if confirm && !Confirm::new().with_prompt(format!("{}`{}` is not present: do you want me to make it so?", TAB, Paint::blue(name))).interact()? {
             println!("{}Skipping ...", TAB);
-            return Ok(())
+            return Err(anyhow::anyhow!("User skipped required operation."));
         }
         
         println!("{}Ensuring presence of `{}` ({}) ...", TAB, Paint::blue(name), Paint::yellow("you may need to interact with the execution"));
         
+        if cfg!(target_os = "windows") {
+            println!("{}{}: Please install `{}` manually on Windows.", TAB, Paint::red("✘"), Paint::blue(name));
+            return Err(anyhow::anyhow!("User skipped required operation."));
+        }
+
         self.make_present().await?;
         
         println!("{}Successfully ensured `{}`.", TAB, Paint::blue(name));
@@ -68,7 +98,7 @@ pub trait RemovableEntity {
 }
 
 impl<T> RemovableEntity for T
-    where T: Nameable + Ensurable + Removable + Send + Sync
+    where T: HasName + IsEnsurable + IsRemovable + Send + Sync
 {
     async fn remove(&self, confirm: bool) -> Result<()> {
         let name = self.name();
@@ -85,6 +115,11 @@ impl<T> RemovableEntity for T
 
         println!("{}Removing presence of `{}` ({}) ...", TAB, Paint::blue(name), Paint::yellow("you may need to interact with the execution [and sudo]"));
         
+        if cfg!(target_os = "windows") {
+            println!("{}{}: Please remove `{}` manually on Windows.", TAB, Paint::red("✘"), Paint::blue(name));
+            return Err(anyhow::anyhow!("User skipped required operation."));
+        }
+
         self.make_not_present().await?;
         
         println!("{}Successfully removed `{}`.", TAB, Paint::blue(name));
@@ -111,9 +146,11 @@ impl MapStatus for Result<ExitStatus, std::io::Error> {
 // Other helper methods.
 
 pub(crate) async fn is_binary_present<T>(s: &T) -> Result<bool>
-    where T: Nameable
+    where T: HasName
 {
-    Ok(Command::new("which")
+    let cmd = if cfg!(target_os = "windows") { "where" } else { "which" };
+
+    Ok(Command::new(cmd)
         .arg(s.name())
         .stdout(Stdio::null())
         .stderr(Stdio::null())

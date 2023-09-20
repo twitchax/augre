@@ -114,6 +114,7 @@ dependencies = [
  "serde",
  "termimad",
  "tokio",
+ "url",
  "yansi",
 ]
 

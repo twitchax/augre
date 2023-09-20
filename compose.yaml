@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  cria:
+    image: twitchax/cria-gpu:2023.09.20
+    ports:
+      - 3000:3000
+    volumes:
+      - //d/LargeData/codellama/codellama-13b-instruct.ggmlv3.Q5_K_M.bin:/app/model.bin
+    environment:
+      - CRIA_SERVICE_NAME=cria
+      - CRIA_HOST=0.0.0.0
+      - CRIA_PORT=3000
+      - CRIA_ZIPKIN_ENDPOINT=http://zipkin-server:9411/api/v2/spans
+      - CRIA_CONTEXT_SIZE=65536
+      - CRIA_USE_GPU=true
+      - CRIA_GPU_LAYERS=32
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+  zipkin-server:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"

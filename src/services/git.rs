@@ -1,20 +1,20 @@
 use tokio::process::Command;
 use anyhow::{Result, Context};
 
-use crate::base::types::{Nameable, Ensurable, is_binary_present, MapStatus};
+use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus};
 
 static NAME: &str = "git";
 
 #[derive(Default)]
 pub struct Git {}
 
-impl Nameable for Git {
+impl HasName for Git {
     fn name(&self) -> &'static str {
         NAME
     }
 }
 
-impl Ensurable for Git {
+impl IsEnsurable for Git {
     async fn is_present(&self) -> Result<bool> {
         is_binary_present(self).await
     }
@@ -48,12 +48,11 @@ impl Git {
     pub async fn diff() -> Result<String> {
         let output = Command::new("git")
             .arg("diff")
-            .arg("HEAD^")
             .output().await
-            .context("Unable to run `git diff HEAD^`.")?;
+            .context("Unable to run `git diff`.")?;
 
         if !output.status.success() {
-            return Err(anyhow::Error::msg("The exit code of the `git diff HEAD^` operation was not successful."));
+            return Err(anyhow::Error::msg("The exit code of the `git diff` operation was not successful."));
         }
 
         let stdout = String::from_utf8(output.stdout)?;
