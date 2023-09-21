@@ -5,7 +5,7 @@ use tokio::process::Command;
 use anyhow::{Result, Context};
 use url::Url;
 
-use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Mode, Res};
+use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Mode, Res, Void};
 
 static NAME: &str = "gpt";
 
@@ -22,12 +22,14 @@ impl HasName for Gpt {
 }
 
 impl IsEnsurable for Gpt {
-    async fn is_present(&self) -> Result<bool> {
+    async fn is_present(&self) -> Res<bool> {
+        let _ = self.resolve_key()?;
+        
         Ok(true)
     }
 
-    async fn make_present(&self) -> Result<()> {
-        Ok(())
+    async fn make_present(&self) -> Void {
+        Err(anyhow::Error::msg("Cannot perform `make_present`: this should not happen."))
     }
 }
 

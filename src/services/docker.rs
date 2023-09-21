@@ -1,7 +1,7 @@
 use tokio::process::Command;
 use anyhow::{Result, Context};
 
-use crate::base::types::{is_binary_present, HasName, IsEnsurable, MapStatus};
+use crate::base::types::{is_binary_present, HasName, IsEnsurable, MapStatus, Res, Void};
 
 static NAME: &str = "docker";
 
@@ -15,11 +15,11 @@ impl HasName for Docker {
 }
 
 impl IsEnsurable for Docker {
-    async fn is_present(&self) -> Result<bool> {
+    async fn is_present(&self) -> Res<bool> {
         is_binary_present(self).await
     }
 
-    async fn make_present(&self) -> Result<()> {
+    async fn make_present(&self) -> Void {
         Command::new("curl")
             .arg("-fsSL")
             .arg("https://get.docker.com")

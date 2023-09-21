@@ -3,10 +3,10 @@ use anyhow::{Result, Context};
 
 use crate::base::types::{is_binary_present, HasName, IsEnsurable, MapStatus, Mode, Res};
 
-static NAME: &str = "docker";
+static NAME: &str = "model";
 
 pub struct Model {
-    data_path: String,
+    model_path: Option<String>,
     model_url: Option<String>,
 }
 
@@ -18,21 +18,20 @@ impl HasName for Model {
 
 impl IsEnsurable for Model {
     async fn is_present(&self) -> Res<bool> {
-        let url = self.resolve_url()?;
+        let path = self.resolve_path()?;
 
-        let file_name = url.split('/').last().ok_or_else(|| anyhow::Error::msg("Unable to get the file name from the model URL."))?;
-
-        Ok(std::fs::try_exists(file_name)?)
+        Ok(std::fs::try_exists(path)?)
     }
 
     async fn make_present(&self) -> Res<()> {
+        let path = self.resolve_path()?;
         let url = self.resolve_url()?;
 
         Command::new("curl")
             .arg("-fsSL")
             .arg(url)
             .arg("-o")
-            .arg(&self.data_path)
+            .arg(path)
             .status().await
             .map_status()
             .context("Unable to curl the model.")?;
@@ -42,14 +41,18 @@ impl IsEnsurable for Model {
 }
 
 impl Model {
-    pub fn new(data_path: &str, url: &Option<String>) -> Self {
+    pub fn new(model_path: &Option<String>, model_url: &Option<String>) -> Self {
         Self {
-            data_path: data_path.to_string(),
-            model_url: url.clone(),
+            model_path: model_path.clone(),
+            model_url: model_url.clone(),
         }
     }
 
     fn resolve_url(&self) -> Res<&str> {
         self.model_url.as_deref().ok_or_else(|| anyhow::Error::msg("No model URL provided.  Please provide a `model_url` config value, or use the OpenAI mode."))
+    }
+
+    fn resolve_path(&self) -> Res<&str> {
+        self.model_path.as_deref().ok_or_else(|| anyhow::Error::msg("No model path provided.  Please provide a `model_path` config value, or use the OpenAI mode."))
     }
 }

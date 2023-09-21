@@ -11,6 +11,7 @@ struct OptionalConfig {
     openai_key: Option<String>,
     mode: Option<Mode>,
     model_url: Option<String>,
+    cria_port: Option<u16>,
 }
 
 /// The configuration type.
@@ -20,8 +21,10 @@ pub struct Config {
     pub mode: Mode,
     pub data_path: String,
 
+    pub cria_port: Option<u16>,
     pub openai_key: Option<String>,
     pub model_url: Option<String>,
+    pub model_path: Option<String>,
 }
 
 impl Config {
@@ -49,12 +52,19 @@ impl Config {
             },
         };
 
+        let model_path = optional_config.model_url.as_ref().map(|url| {
+            let file_name = url.split('/').last().unwrap();
+            format!("{}/{}", data_path, file_name)
+        });
+
         let config = Config {
             openai_endpoint,
             openai_key: optional_config.openai_key,
             mode,
             data_path: data_path.to_string(),
             model_url: optional_config.model_url,
+            cria_port: optional_config.cria_port,
+            model_path
         };
 
         Ok(config)

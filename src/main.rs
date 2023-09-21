@@ -130,7 +130,7 @@ async fn ask(config: &Config, confirm: bool, prompt: &str) -> Void {
 async fn maybe_prepare_local(config: &Config, confirm: bool) -> Void {
     if config.mode == Mode::LocalCpu || config.mode == Mode::LocalGpu {
         let docker = Docker::default();
-        let model = Model::new(&config.data_path, &config.model_url);
+        let model = Model::new(&config.model_path, &config.model_url);
 
         docker.ensure(confirm).await?;
         model.ensure(confirm).await?;

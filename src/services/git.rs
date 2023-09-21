@@ -1,7 +1,7 @@
 use tokio::process::Command;
 use anyhow::{Result, Context};
 
-use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus};
+use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Res, Void};
 
 static NAME: &str = "git";
 
@@ -15,11 +15,11 @@ impl HasName for Git {
 }
 
 impl IsEnsurable for Git {
-    async fn is_present(&self) -> Result<bool> {
+    async fn is_present(&self) -> Res<bool> {
         is_binary_present(self).await
     }
 
-    async fn make_present(&self) -> Result<()> {
+    async fn make_present(&self) -> Void {
         Command::new("apt-get")
             .arg("update")
             .status().await
@@ -45,7 +45,7 @@ impl IsEnsurable for Git {
 }
 
 impl Git {
-    pub async fn diff() -> Result<String> {
+    pub async fn diff() -> Res<String> {
         let output = Command::new("git")
             .arg("diff")
             .output().await

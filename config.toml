@@ -1,2 +1,0 @@
-mode = "OpenAi"
-model_url = "https://huggingface.co/TheBloke/CodeLlama-13B-GGML/resolve/main/codellama-13b.ggmlv3.Q2_K.bin"
