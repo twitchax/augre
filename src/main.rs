@@ -15,7 +15,7 @@ pub mod services;
 
 use base::{types::{Void, EnsurableEntity, Mode}, config::Config};
 use clap::{command, Parser, Subcommand};
-use services::{git::Git, gpt::{self, Gpt}};
+use services::{git::Git, gpt::{self, Gpt}, cria::Cria};
 use termimad::MadSkin;
 use yansi::Paint;
 
@@ -131,9 +131,11 @@ async fn maybe_prepare_local(config: &Config, confirm: bool) -> Void {
     if config.mode == Mode::LocalCpu || config.mode == Mode::LocalGpu {
         let docker = Docker::default();
         let model = Model::new(&config.model_path, &config.model_url);
+        let cria = Cria::new(&config.model_path, &config.data_path, config.mode, config.cria_port);
 
         docker.ensure(confirm).await?;
         model.ensure(confirm).await?;
+        cria.ensure(confirm).await?;
     }
 
     Ok(())

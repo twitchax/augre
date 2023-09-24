@@ -38,6 +38,24 @@ impl FromStr for Mode {
     }
 }
 
+impl Mode {
+    pub fn is_openai(&self) -> bool {
+        self == &Mode::OpenAi
+    }
+
+    pub fn is_local(&self) -> bool {
+        self == &Mode::LocalCpu || self == &Mode::LocalGpu
+    }
+
+    pub fn is_local_gpu(&self) -> bool {
+        self == &Mode::LocalGpu
+    }
+
+    pub fn is_local_cpu(&self) -> bool {
+        self == &Mode::LocalCpu
+    }
+}
+
 // Traits for various internal functionality.
 
 pub trait HasName {

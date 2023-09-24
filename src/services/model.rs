@@ -28,7 +28,8 @@ impl IsEnsurable for Model {
         let url = self.resolve_url()?;
 
         Command::new("curl")
-            .arg("-fsSL")
+            .arg("--progress-bar")
+            .arg("-fSL")
             .arg(url)
             .arg("-o")
             .arg(path)

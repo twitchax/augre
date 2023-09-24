@@ -3,7 +3,7 @@ use std::{path::Path, borrow::Cow};
 use tokio::process::Command;
 use anyhow::{Result, Context};
 
-use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Void, Res};
+use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Void, Res, Mode};
 
 static NAME: &str = "cria";
 
@@ -11,6 +11,7 @@ static NAME: &str = "cria";
 pub struct Cria {
     model_path: Option<String>,
     data_path: String,
+    mode: Mode,
     port: Option<u16>
 }
 
@@ -49,7 +50,13 @@ impl IsEnsurable for Cria {
             path.to_string_lossy()
         };
 
-        let compose = GPU_COMPOSE
+        let compose_template = if self.mode.is_local_gpu() {
+            GPU_COMPOSE
+        } else {
+            CPU_COMPOSE
+        };
+
+        let compose = compose_template
             .replace("{{port}}", &self.resolve_port()?.to_string())
             .replace("{{model}}", &path);
 
@@ -71,10 +78,11 @@ impl IsEnsurable for Cria {
 }
 
 impl Cria {
-    pub fn new(model_path: &Option<String>, data_path: &str, port: Option<u16>) -> Self {
+    pub fn new(model_path: &Option<String>, data_path: &str, mode: Mode, port: Option<u16>) -> Self {
         Self {
             model_path: model_path.clone(),
             data_path: data_path.to_string(),
+            mode,
             port
         }
     }
@@ -115,6 +123,28 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [ gpu ]
+  zipkin-server:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+"#;
+
+static CPU_COMPOSE: &str = r#"
+version: "3.8"
+
+services:
+  cria:
+    image: twitchax/cria-gpu:2023.09.20
+    ports:
+      - {{port}}:{{port}}
+    volumes:
+      - {{model}}:/app/model.bin
+    environment:
+      - CRIA_SERVICE_NAME=cria
+      - CRIA_HOST=0.0.0.0
+      - CRIA_PORT={{port}}
+      - CRIA_ZIPKIN_ENDPOINT=http://zipkin-server:9411/api/v2/spans
+      - CRIA_CONTEXT_SIZE=65536
   zipkin-server:
     image: openzipkin/zipkin
     ports:
