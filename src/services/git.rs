@@ -1,7 +1,8 @@
 use tokio::process::Command;
-use anyhow::{Result, Context};
+use anyhow::Context;
+use yansi::Paint;
 
-use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Res, Void};
+use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Res, Void, TAB};
 
 static NAME: &str = "git";
 
@@ -20,6 +21,11 @@ impl IsEnsurable for Git {
     }
 
     async fn make_present(&self) -> Void {
+        if cfg!(target_os = "windows") {
+            println!("{}{}: Please install `{}` manually on Windows.", TAB, Paint::red("✘"), Paint::blue(NAME));
+            return Err(anyhow::anyhow!("User skipped required operation."));
+        }
+
         Command::new("apt-get")
             .arg("update")
             .status().await

@@ -1,7 +1,7 @@
 use tokio::process::Command;
-use anyhow::{Result, Context};
+use anyhow::Context;
 
-use crate::base::types::{is_binary_present, HasName, IsEnsurable, MapStatus, Mode, Res};
+use crate::base::types::{HasName, IsEnsurable, MapStatus, Res};
 
 static NAME: &str = "model";
 

@@ -1,6 +1,5 @@
 //! The configuration module.
 
-use anyhow::Context;
 use config::{Environment, File};
 use serde::{Deserialize, Serialize};
 
@@ -43,11 +42,11 @@ impl Config {
 
         let openai_endpoint = match mode {
             Mode::LocalCpu | Mode::LocalGpu => {
-                println!("{}: Running in local mode.", yansi::Paint::yellow("WARN"));
+                println!("{}: Running in local mode.", yansi::Paint::green("✅"));
                 "http://localhost:3000".to_string()
             },
             Mode::OpenAi => {
-                println!("{}: Running in OpenAI mode.", yansi::Paint::yellow("WARN"));
+                println!("{}: Running in OpenAI mode.", yansi::Paint::green("✅"));
                 "https://api.openai.com".to_string()
             },
         };

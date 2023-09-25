@@ -1,7 +1,8 @@
 use tokio::process::Command;
-use anyhow::{Result, Context};
+use anyhow::Context;
+use yansi::Paint;
 
-use crate::base::types::{is_binary_present, HasName, IsEnsurable, MapStatus, Res, Void};
+use crate::base::types::{is_binary_present, HasName, IsEnsurable, MapStatus, Res, Void, TAB};
 
 static NAME: &str = "docker";
 
@@ -20,6 +21,11 @@ impl IsEnsurable for Docker {
     }
 
     async fn make_present(&self) -> Void {
+        if cfg!(target_os = "windows") {
+            println!("{}{}: Please install `{}` manually on Windows.", TAB, Paint::red("✘"), Paint::blue(NAME));
+            return Err(anyhow::anyhow!("User skipped required operation."));
+        }
+        
         Command::new("curl")
             .arg("-fsSL")
             .arg("https://get.docker.com")

@@ -1,11 +1,9 @@
 use std::{str::FromStr, time::Duration};
 
 use chatgpt::prelude::{ChatGPT, ModelConfiguration, ChatGPTEngine};
-use tokio::process::Command;
-use anyhow::{Result, Context};
 use url::Url;
 
-use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Mode, Res, Void};
+use crate::base::types::{HasName, IsEnsurable, Mode, Res, Void};
 
 static NAME: &str = "gpt";
 

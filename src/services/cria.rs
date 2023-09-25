@@ -1,13 +1,12 @@
-use std::{path::Path, borrow::Cow};
+use std::{path::Path, borrow::Cow, time::Duration};
 
 use tokio::process::Command;
-use anyhow::{Result, Context};
+use anyhow::Context;
 
-use crate::base::types::{HasName, IsEnsurable, is_binary_present, MapStatus, Void, Res, Mode};
+use crate::base::types::{HasName, IsEnsurable, MapStatus, Void, Res, Mode, IsRemovable, TAB};
 
 static NAME: &str = "cria";
 
-#[derive(Default)]
 pub struct Cria {
     model_path: Option<String>,
     data_path: String,
@@ -23,31 +22,30 @@ impl HasName for Cria {
 
 impl IsEnsurable for Cria {
     async fn is_present(&self) -> Res<bool> {
-        let _ = self.resolve_port()?;
+        let port = self.resolve_port()?;
 
         // grep for `cria` in `docker ps` output.
-        let output = Command::new("docker")
-            .arg("ps")
+        let output = Command::new("curl")
+            .arg(format!("http://localhost:{}/v1/models", port))
             .output().await
-            .context("Unable to run `docker ps`.")?;
+            .context("Unable to curl the local server.")?;
 
-        if !output.status.success() {
-            return Err(anyhow::Error::msg("The exit code of the `docker ps` operation was not successful."));
-        }
-
-        let stdout = String::from_utf8(output.stdout)?;
-
-        Ok(stdout.contains("cria"))
+        Ok(output.status.success())
     }
 
     async fn make_present(&self) -> Void {
-        let path = self.resolve_path()?;
-        let path = Path::new(path);
+        let _ = self.resolve_port()?;
+        let model_path = self.resolve_model_path()?;
+        let model_path = Path::new(model_path);
 
-        let path = if cfg!(target_os = "windows") && path.is_relative() {
-            Cow::Owned(format!("$pwd/{}", path.to_string_lossy()))
+        let path = if cfg!(target_os = "windows") && model_path.is_relative() {
+            let interim = model_path.canonicalize()?.to_owned().to_string_lossy().to_string();
+            let drive = interim.chars().collect::<Vec<_>>()[4].to_ascii_lowercase();
+            let path = format!("//{}{}", drive, &interim[6..].replace('\\', "/"));
+            
+            Cow::Owned(path)
         } else {
-            path.to_string_lossy()
+            model_path.to_string_lossy()
         };
 
         let compose_template = if self.mode.is_local_gpu() {
@@ -62,16 +60,50 @@ impl IsEnsurable for Cria {
 
         let compose_path = format!("{}/docker-compose.yml", self.data_path);
 
+        println!("{}Creating `{}` using model path `{}` ... ", TAB, compose_path, path);
+
         std::fs::write(&compose_path, &compose)?;
 
         Command::new("docker-compose")
+            .arg("-p")
+            .arg("cria")
             .arg("-f")
-            .arg("docker-compose.yml")
+            .arg(compose_path)
             .arg("up")
             .arg("-d")
             .status().await
             .map_status()
             .context("Unable to run `docker-compose`.")?;
+
+        for _ in 0..10 {
+            if self.is_present().await? {
+                return Ok(());
+            }
+
+            tokio::time::sleep(Duration::from_secs(10)).await;
+            println!("{}Waiting for Cria to start ... ", TAB)
+        }
+
+        Err(anyhow::Error::msg("Unable to start the Cria server (timed out)."))
+    }
+}
+
+impl IsRemovable for Cria {
+    async fn make_not_present(&self) -> Res<()> {
+        let compose_path = format!("{}/docker-compose.yml", self.data_path);
+
+        println!("{}Removing `{}` ... ", TAB, compose_path);
+
+        Command::new("docker-compose")
+            .arg("-p")
+            .arg("cria")
+            .arg("-f")
+            .arg(compose_path)
+            .arg("down")
+            .status().await
+            .map_status()
+            .unwrap();
+            //.context("Unable to run `docker-compose`.")?;
 
         Ok(())
     }
@@ -91,7 +123,7 @@ impl Cria {
         self.port.ok_or_else(|| anyhow::Error::msg("No cria port provided.  Please provide a `cria_port` config value."))
     }
 
-    fn resolve_path(&self) -> Res<&str> {
+    fn resolve_model_path(&self) -> Res<&str> {
         self.model_path.as_deref().ok_or_else(|| anyhow::Error::msg("No model path provided.  Please provide a `model_path` config value, or use the OpenAI mode."))
     }
 }

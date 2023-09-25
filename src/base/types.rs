@@ -1,5 +1,4 @@
 use anyhow::Result;
-use clap::Parser;
 use serde::{Serialize, Deserialize};
 use tokio::process::Command;
 use std::{process::{Stdio, ExitStatus}, str::FromStr};
@@ -8,7 +7,7 @@ use dialoguer::Confirm;
 
 // Statics.
 
-static TAB: &str = "  ";
+pub static TAB: &str = "  ";
 
 // Error helpers.
 
@@ -97,11 +96,6 @@ impl<T> EnsurableEntity for T
         }
         
         println!("{}Ensuring presence of `{}` ({}) ...", TAB, Paint::blue(name), Paint::yellow("you may need to interact with the execution"));
-        
-        if cfg!(target_os = "windows") {
-            println!("{}{}: Please install `{}` manually on Windows.", TAB, Paint::red("✘"), Paint::blue(name));
-            return Err(anyhow::anyhow!("User skipped required operation."));
-        }
 
         self.make_present().await?;
         
@@ -132,11 +126,6 @@ impl<T> RemovableEntity for T
         }
 
         println!("{}Removing presence of `{}` ({}) ...", TAB, Paint::blue(name), Paint::yellow("you may need to interact with the execution [and sudo]"));
-        
-        if cfg!(target_os = "windows") {
-            println!("{}{}: Please remove `{}` manually on Windows.", TAB, Paint::red("✘"), Paint::blue(name));
-            return Err(anyhow::anyhow!("User skipped required operation."));
-        }
 
         self.make_not_present().await?;
         
@@ -154,10 +143,15 @@ pub trait MapStatus {
 
 impl MapStatus for Result<ExitStatus, std::io::Error> {
     fn map_status(self) -> Result<()> {
+
+
         self
-            .map(|s| s.success())
+            .map(|s| s.code())
             .map_err(|e| e.into())
-            .and_then(|s| if s { Ok(()) } else { Err(anyhow::Error::msg("The exit code of the operation was not successful.")) })
+            .and_then(|s| match s {
+                None | Some(0) => Ok(()),
+                Some(c) => Err(anyhow::Error::msg(format!("The exit code of the operation was not successful ({}).", c))),
+            })
     }
 }
 

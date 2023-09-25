@@ -13,9 +13,9 @@ pub mod services;
 
 // Imports.
 
-use base::{types::{Void, EnsurableEntity, Mode}, config::Config};
+use base::{types::{Void, EnsurableEntity, Mode, RemovableEntity}, config::Config};
 use clap::{command, Parser, Subcommand};
-use services::{git::Git, gpt::{self, Gpt}, cria::Cria};
+use services::{git::Git, gpt::Gpt, cria::Cria};
 use termimad::MadSkin;
 use yansi::Paint;
 
@@ -49,6 +49,9 @@ enum Command {
         /// The prompt to respond to.
         prompt: String,
     },
+
+    /// Stop all of the background services.
+    Stop,
 }
 
 // Entrypoint.
@@ -70,6 +73,7 @@ async fn start(args: Args) -> Void {
     match args.command {
         Some(Command::Review) => review(&config, confirm).await?,
         Some(Command::Ask { prompt }) => ask(&config, confirm, &prompt).await?,
+        Some(Command::Stop) => stop(&config, confirm).await?,
         None => return Err(anyhow::anyhow!("No command specified.")),
     }
 
@@ -123,6 +127,14 @@ async fn ask(config: &Config, confirm: bool, prompt: &str) -> Void {
 
     let skin = MadSkin::default();
     skin.print_text(&response);
+
+    Ok(())
+}
+
+async fn stop(config: &Config, confirm: bool) -> Void {
+    let cria = Cria::new(&config.model_path, &config.data_path, config.mode, config.cria_port);
+
+    cria.remove(confirm).await?;
 
     Ok(())
 }
