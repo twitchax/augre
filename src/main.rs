@@ -65,8 +65,6 @@ async fn main() {
         eprintln!("{}: {}", Paint::red("ERROR"), err);
         std::process::exit(1);
     }
-
-    
 }
 
 async fn start(args: Args) -> Void {
