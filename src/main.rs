@@ -5,6 +5,7 @@
 #![allow(incomplete_features)]
 #![feature(async_fn_in_trait)]
 #![feature(fs_try_exists)]
+#![feature(vec_into_raw_parts)]
 
 // Modules.
 
@@ -64,6 +65,15 @@ async fn main() {
         eprintln!("{}: {}", Paint::red("ERROR"), err);
         std::process::exit(1);
     }
+
+    // Create a Vec.
+    let vec = vec![1, 2, 3];
+
+    // Get the vec's parts.
+    let (ptr, len, cap) = vec.into_raw_parts();
+
+    // Create a Vec from the raw parts.
+    let vec = unsafe { Vec::from_raw_parts(ptr, len, cap) };
 }
 
 async fn start(args: Args) -> Void {

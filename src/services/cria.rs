@@ -5,7 +5,7 @@ use anyhow::Context;
 
 use crate::base::types::{HasName, IsEnsurable, MapStatus, Void, Res, Mode, IsRemovable, TAB};
 
-static NAME: &str = "cria";
+static NAME: &str = "cria_server";
 
 pub struct Cria {
     model_path: Option<String>,

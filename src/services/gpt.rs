@@ -5,7 +5,7 @@ use url::Url;
 
 use crate::base::types::{HasName, IsEnsurable, Mode, Res, Void};
 
-static NAME: &str = "gpt";
+static NAME: &str = "gpt_sdk";
 
 pub struct Gpt {
     url: String,
@@ -39,7 +39,7 @@ impl Gpt {
         let config = ModelConfiguration {
             engine: ChatGPTEngine::Gpt4,
             api_url: Url::from_str(&url)?,
-            timeout: Duration::from_secs(120),
+            timeout: Duration::from_secs(300),
             ..Default::default()
         };
 
@@ -59,7 +59,7 @@ impl Gpt {
         let config = ModelConfiguration {
             engine: ChatGPTEngine::Gpt4,
             api_url: Url::from_str(&url)?,
-            timeout: Duration::from_secs(120),
+            timeout: Duration::from_secs(300),
             ..Default::default()
         };
 

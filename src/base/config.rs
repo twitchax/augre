@@ -42,11 +42,11 @@ impl Config {
 
         let openai_endpoint = match mode {
             Mode::LocalCpu | Mode::LocalGpu => {
-                println!("{}: Running in local mode.", yansi::Paint::green("✅"));
+                println!("{} Running in local mode.", yansi::Paint::green("✅"));
                 "http://localhost:3000".to_string()
             },
             Mode::OpenAi => {
-                println!("{}: Running in OpenAI mode.", yansi::Paint::green("✅"));
+                println!("{} Running in OpenAI mode.", yansi::Paint::green("✅"));
                 "https://api.openai.com".to_string()
             },
         };

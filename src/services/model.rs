@@ -3,7 +3,7 @@ use anyhow::Context;
 
 use crate::base::types::{HasName, IsEnsurable, MapStatus, Res};
 
-static NAME: &str = "model";
+static NAME: &str = "model_bin";
 
 pub struct Model {
     model_path: Option<String>,
