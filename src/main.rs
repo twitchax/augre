@@ -27,13 +27,16 @@ use crate::services::{docker::Docker, model::Model};
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 struct Args {
+    /// The path to the data directory.
     #[arg(short, long, default_value = ".augre")]
     data_path: String,
 
+    /// The default operation mode.
     #[arg(short, long, default_value = "openai")]
     mode: Mode,
 
-    #[clap(long, short, action)]
+    /// Whether to skip the confirmation prompt.
+    #[clap(long = "yes", short = 'y', action)]
     skip_confirm: bool,
 
     #[command(subcommand)]

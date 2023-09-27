@@ -3,7 +3,6 @@
 [![Version](https://img.shields.io/crates/v/augre.svg)](https://crates.io/crates/augre)
 [![Crates.io](https://img.shields.io/crates/d/augre?label=crate)](https://crates.io/crates/augre)
 [![GitHub all releases](https://img.shields.io/github/downloads/twitchax/augre/total?label=binary)](https://github.com/twitchax/augre/releases)
-[![Documentation](https://docs.rs/augre/badge.svg)](https://docs.rs/augre)
 [![Rust](https://img.shields.io/badge/rust-nightly-blue.svg?maxAge=3600)](https://github.com/twitchax/augre)
 [![License:MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -47,13 +46,22 @@ $ cargo install augre
 ### Help Docs
 
 ```bash
+$ augre -h
+Usage: augre [OPTIONS] [COMMAND]
+
+Commands:
+  review  Performs a code review of the current `git diff HEAD^`
+  ask     Gives a response to the specified prompt
+  stop    Stop all of the background services
+  help    Print this message or the help of the given subcommand(s)
+
+Options:
+  -d, --data-path <DATA_PATH>  The path to the data directory [default: .augre]
+  -m, --mode <MODE>            The default operation mode [default: openai]
+  -y, --yes                    Whether to skip the confirmation prompt
+  -h, --help                   Print help
+  -V, --version                Print version
 ```
-
-## Feature Flags
-
-## Test
-
-## Bench
 
 ## License
 
