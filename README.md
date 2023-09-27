@@ -63,6 +63,14 @@ Options:
   -V, --version                Print version
 ```
 
+## Example Config
+
+```toml
+mode = "LocalGpu"
+model_url = "https://huggingface.co/TheBloke/CodeLlama-13B-Instruct-GGML/resolve/main/codellama-13b-instruct.ggmlv3.Q3_K_M.bin"
+cria_port = 3000
+```
+
 ## License
 
 MIT
