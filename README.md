@@ -16,9 +16,21 @@ An LLM-powered (CodeLlama or OpenAI) local diff code review tool.
 
 Windows:
 
+1. Open PowerShell as an Administrator.
+
+2. Download and insall augre:
 ```powershell
-$ iwr https://github.com/twitchax/augre/releases/latest/download/augre_x86_64-pc-windows-gnu.zip
-$ Expand-Archive augre_x86_64-pc-windows-gnu.zip -DestinationPath C:\Users\%USERNAME%\AppData\Local\Programs\augre
+$ iwr -uri https://github.com/twitchax/augre/releases/latest/download/augre_x86_64-pc-windows-gnu.zip -OutFile "augre_x86_64-pc-windows-gnu.zip"
+$ Expand-Archive augre_x86_64-pc-windows-gnu.zip -DestinationPath "$env:LOCALAPPDATA\Programs\augre"
+```
+3. Add the augre directory to your PATH.
+```powershell
+$augre_path = "$env:LOCALAPPDATA\Programs\augre"
+$current_path = [Environment]::GetEnvironmentVariable("PATH", "User")
+if ($current_path -notlike "*$augre_path*") {
+    [Environment]::SetEnvironmentVariable("PATH", "$current_path;$augre_path", "User")
+    $env:PATH = "$env:PATH;$augre_path"
+}
 ```
 
 Mac OS (Apple Silicon):
